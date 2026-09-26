@@ -62,12 +62,6 @@ export default function SessionJourney({ onBook }: { onBook: () => void }) {
           const { small, reduce } = c.conditions as { small: boolean; reduce: boolean };
           const k = small ? 0.6 : 1; // menos recorrido en móvil
 
-          gsap.set(".sj-obj", { autoAlpha: 0 });
-          gsap.set(copies, { autoAlpha: 0 });
-          gsap.set(nums, { autoAlpha: 0 });
-          gsap.set([copies[0], nums[0]], { autoAlpha: 1 });
-          gsap.set(q("chair"), { autoAlpha: 1 });
-          gsap.set(q("mirror"), { autoAlpha: 0.95 });
 
           // llegada: la silla aparece mientras la sección entra en pantalla (antes de fijarse)
           gsap.timeline({
@@ -75,7 +69,7 @@ export default function SessionJourney({ onBook }: { onBook: () => void }) {
           })
             // anima la capa contenedora, no los objetos: así no compite con el timeline principal
             .fromTo(".sj-objects", { autoAlpha: 0, yPercent: 16, scale: 0.92 }, { autoAlpha: 1, yPercent: 0, scale: 1, ease: "power3.out" }, 0)
-            .fromTo(".sj-light", { autoAlpha: 0, scale: 0.7 }, { autoAlpha: 1, scale: 1, ease: "power1.out" }, 0);
+            .fromTo(".sj-light", { autoAlpha: 0 }, { autoAlpha: 1, ease: "power1.out" }, 0);
 
           const marks: number[] = [];
           const tl = gsap.timeline({
@@ -97,6 +91,14 @@ export default function SessionJourney({ onBook }: { onBook: () => void }) {
               },
             },
           });
+
+          // estado inicial DENTRO del timeline: si ScrollTrigger recalcula a mitad de la escena
+          // (fuentes, imágenes, barra del navegador en móvil) vuelve a partir de aquí y no del estado actual
+          tl.set(".sj-obj", { autoAlpha: 0, x: 0, y: 0, rotation: 0, scale: 1 }, 0)
+            .set(q("chair"), { autoAlpha: 1 }, 0)
+            .set(q("mirror"), { autoAlpha: 0.95 }, 0)
+            .set([...copies, ...nums], { autoAlpha: 0, y: 0, yPercent: 0 }, 0)
+            .set([copies[0], nums[0]], { autoAlpha: 1 }, 0);
 
           const swap = (i: number, at: number) => {
             marks[i] = at + 0.5; // el índice cambia junto con el texto
@@ -160,8 +162,7 @@ export default function SessionJourney({ onBook }: { onBook: () => void }) {
             .to(q("oil"), { autoAlpha: 0, x: vw(26 * k), duration: 1, ease: "power2.in" }, 15.4)
             .to(q("dryer"), { autoAlpha: 0, x: vw(30), y: vh(-20), duration: 1, ease: "power2.in" }, 15.4)
             .fromTo(q("chair"), { autoAlpha: 0, y: vh(18), scale: 0.9, rotation: 0 }, { autoAlpha: 1, y: 0, scale: small ? 0.9 : 0.96, duration: 1.6, immediateRender: false }, 16)
-            .fromTo(q("mirror"), { autoAlpha: 0, x: 0, y: vh(8) }, { autoAlpha: 0.4, y: 0, duration: 1.6, immediateRender: false }, 16.2)
-            .to(".sj-light", { scale: 1.2, duration: 1.6 }, 16);
+            .fromTo(q("mirror"), { autoAlpha: 0, x: 0, y: vh(8) }, { autoAlpha: 0.4, y: 0, duration: 1.6, immediateRender: false }, 16.2);
           tl.to({}, { duration: 0.8 });
 
           // microinteracción: parallax suave con el cursor (solo desktop y sin reduced-motion)
