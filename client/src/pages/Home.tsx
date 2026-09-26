@@ -11,6 +11,7 @@ import {
   useTransform,
   type MotionValue,
 } from "framer-motion";
+import SessionJourney from "@/components/SessionJourney";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, Instagram, MapPin, Phone, Scissors, X } from "lucide-react";
 
 const assets = {
@@ -614,6 +615,9 @@ export default function Home() {
             </Reveal>
           </div>
         </section>
+
+        {/* SESIÓN — experiencia guiada por scroll */}
+        <SessionJourney onBook={() => openBooking()} />
 
         {/* GALLERY */}
         <section id="galeria" className="gallery-section section-pad sand-section">
