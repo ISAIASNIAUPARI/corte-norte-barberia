@@ -66,13 +66,15 @@ export default function SessionJourney({ onBook }: { onBook: () => void }) {
           gsap.set(copies, { autoAlpha: 0 });
           gsap.set(nums, { autoAlpha: 0 });
           gsap.set([copies[0], nums[0]], { autoAlpha: 1 });
+          gsap.set(q("chair"), { autoAlpha: 1 });
+          gsap.set(q("mirror"), { autoAlpha: 0.95 });
 
           // llegada: la silla aparece mientras la sección entra en pantalla (antes de fijarse)
           gsap.timeline({
             scrollTrigger: { trigger: el, start: "top 85%", end: "top top", scrub: 1, invalidateOnRefresh: true },
           })
-            .fromTo(q("mirror"), { autoAlpha: 0, y: vh(14) }, { autoAlpha: 0.95, y: 0, ease: "power2.out" }, 0)
-            .fromTo(q("chair"), { autoAlpha: 0, y: vh(28), scale: 0.88 }, { autoAlpha: 1, y: 0, scale: 1, ease: "power3.out" }, 0.1)
+            // anima la capa contenedora, no los objetos: así no compite con el timeline principal
+            .fromTo(".sj-objects", { autoAlpha: 0, yPercent: 16, scale: 0.92 }, { autoAlpha: 1, yPercent: 0, scale: 1, ease: "power3.out" }, 0)
             .fromTo(".sj-light", { autoAlpha: 0, scale: 0.7 }, { autoAlpha: 1, scale: 1, ease: "power1.out" }, 0);
 
           const marks: number[] = [];
@@ -157,8 +159,8 @@ export default function SessionJourney({ onBook }: { onBook: () => void }) {
           tl.to(q("pomade"), { autoAlpha: 0, y: vh(30), duration: 1, ease: "power2.in" }, 15.3)
             .to(q("oil"), { autoAlpha: 0, x: vw(26 * k), duration: 1, ease: "power2.in" }, 15.4)
             .to(q("dryer"), { autoAlpha: 0, x: vw(30), y: vh(-20), duration: 1, ease: "power2.in" }, 15.4)
-            .fromTo(q("chair"), { autoAlpha: 0, y: vh(18), scale: 0.9, rotation: 0 }, { autoAlpha: 1, y: 0, scale: small ? 0.9 : 0.96, duration: 1.6 }, 16)
-            .fromTo(q("mirror"), { autoAlpha: 0, x: 0, y: vh(8) }, { autoAlpha: 0.4, y: 0, duration: 1.6 }, 16.2)
+            .fromTo(q("chair"), { autoAlpha: 0, y: vh(18), scale: 0.9, rotation: 0 }, { autoAlpha: 1, y: 0, scale: small ? 0.9 : 0.96, duration: 1.6, immediateRender: false }, 16)
+            .fromTo(q("mirror"), { autoAlpha: 0, x: 0, y: vh(8) }, { autoAlpha: 0.4, y: 0, duration: 1.6, immediateRender: false }, 16.2)
             .to(".sj-light", { scale: 1.2, duration: 1.6 }, 16);
           tl.to({}, { duration: 0.8 });
 
@@ -178,11 +180,19 @@ export default function SessionJourney({ onBook }: { onBook: () => void }) {
       );
     }, root);
 
+    // precarga los objetos cuando la sección se acerca (lazy + opacidad 0 podía retrasarlos)
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      el.querySelectorAll<HTMLImageElement>(".sj-obj").forEach((img) => { img.loading = "eager"; });
+      io.disconnect();
+    }, { rootMargin: "150% 0px" });
+    io.observe(el);
+
     // fuentes e imágenes cambian alturas de secciones anteriores → recalcular posiciones
     const refresh = () => ScrollTrigger.refresh();
     window.addEventListener("load", refresh);
     document.fonts?.ready.then(refresh);
-    return () => { window.removeEventListener("load", refresh); ctx.revert(); };
+    return () => { window.removeEventListener("load", refresh); io.disconnect(); ctx.revert(); };
   }, []);
 
   return (
